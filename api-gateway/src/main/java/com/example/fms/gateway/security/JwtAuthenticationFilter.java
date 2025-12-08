@@ -1,7 +1,6 @@
 package com.example.fms.gateway.security;
 
 import io.jsonwebtoken.Claims;
-import lombok.RequiredArgsConstructor;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpStatus;
@@ -11,12 +10,19 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 @Component
-@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAuthenticationFilter.Config> {
 
     private final JwtUtil jwtUtil;
 
-    public static class Config {}
+    // Manual constructor - removed @RequiredArgsConstructor
+    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
+        super(Config.class);  // Tell Spring Gateway which Config class to use
+        this.jwtUtil = jwtUtil;
+    }
+
+    public static class Config {
+        // Empty config class - no properties needed
+    }
 
     @Override
     public GatewayFilter apply(Config config) {
