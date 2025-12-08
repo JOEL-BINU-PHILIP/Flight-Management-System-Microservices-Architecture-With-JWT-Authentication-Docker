@@ -1,11 +1,13 @@
 package com.example.fms.booking.controller;
 
+import com.example.fms.booking.config.TestSecurityConfig;
 import com.example.fms.booking.dto.*;
 import com.example.fms.booking.service.BookingService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -24,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "spring.config.import=",
         "eureka.client.enabled=false"
 })
+@Import(TestSecurityConfig.class)
 class BookingControllerTest {
 
     @Autowired
