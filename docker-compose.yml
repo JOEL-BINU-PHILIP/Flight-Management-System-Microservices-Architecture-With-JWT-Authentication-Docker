@@ -1,0 +1,151 @@
+version: "3.9"
+
+services:
+
+  # ===========================
+  # CONFIG SERVER (from another repo)
+  # ===========================
+  config-server:
+    build:
+      context: ../fms-config-server   # <--- IMPORTANT
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    networks:
+      - fms-network
+
+  # ===========================
+  # EUREKA SERVICE REGISTRY
+  # ===========================
+  service-registry:
+    build: ./service-registry
+    container_name: service-registry
+    ports:
+      - "8761:8761"
+    depends_on:
+      - config-server
+    networks:
+      - fms-network
+
+  # ===========================
+  # MONGODB
+  # ===========================
+  mongo:
+    image: mongo:6
+    container_name: mongo-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - fms-network
+
+  # ===========================
+  # RABBITMQ
+  # ===========================
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - fms-network
+
+  # ===========================
+  # AUTH SERVICE
+  # ===========================
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    ports:
+      - "8001:8001"
+    depends_on:
+      - mongo
+      - config-server
+      - service-registry
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - fms-network
+
+  # ===========================
+  # FLIGHT SERVICE
+  # ===========================
+  flight-service:
+    build: ./flight-service
+    container_name: flight-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongo
+      - config-server
+      - service-registry
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - fms-network
+
+  # ===========================
+  # BOOKING SERVICE
+  # ===========================
+  booking-service:
+    build: ./booking-service
+    container_name: booking-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - mongo
+      - rabbitmq
+      - flight-service
+      - config-server
+      - service-registry
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - fms-network
+
+  # ===========================
+  # EMAIL SERVICE
+  # ===========================
+  email-service:
+    build: ./email-service
+    container_name: email-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      - rabbitmq
+      - config-server
+      - service-registry
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - fms-network
+
+  # ===========================
+  # API GATEWAY
+  # ===========================
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - config-server
+      - service-registry
+      - auth-service
+      - flight-service
+      - booking-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - fms-network
+
+# ===========================
+# NETWORKS & VOLUMES
+# ===========================
+networks:
+  fms-network:
+
+volumes:
+  mongo_data:
