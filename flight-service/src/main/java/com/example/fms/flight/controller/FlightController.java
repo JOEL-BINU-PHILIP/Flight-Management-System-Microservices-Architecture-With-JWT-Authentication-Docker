@@ -6,6 +6,7 @@ import com.example.fms.flight.service.FlightService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,6 +17,7 @@ public class FlightController {
     private final FlightService flightService;
 
     // ADMIN → Add Airline
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping("/airline")
     public ResponseEntity<String> addAirline(@RequestBody AddAirlineRequest req) {
         flightService.addAirline(req);
@@ -24,6 +26,7 @@ public class FlightController {
     }
 
     // ADMIN → Add Inventory
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping("/airline/{airlineId}/inventory")
     public ResponseEntity<String> addInventory(
             @PathVariable("airlineId") String airlineId,
@@ -49,6 +52,7 @@ public class FlightController {
     }
 
     // USER → Reserve Seats (Used By Booking Service)
+    @PreAuthorize("hasRole('ROLE_CUSTOMER')")
     @PostMapping("/reserve/{flightId}")
     public ResponseEntity<Boolean> reserveSeats(
             @PathVariable("flightId") String flightId,
