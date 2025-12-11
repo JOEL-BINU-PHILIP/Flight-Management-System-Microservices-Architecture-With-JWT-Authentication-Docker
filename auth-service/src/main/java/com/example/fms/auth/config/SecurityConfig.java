@@ -1,4 +1,5 @@
 package com.example.fms.auth.config;
+import com.example.fms.auth.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.*;
 import org.springframework.security.authentication.*;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -10,7 +11,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.example.fms.auth.security.JwtAuthenticationFilter;
 import com.example.fms.auth.security.JwtService;
 import com.example.fms.auth.security.UserDetailsServiceImpl;
 

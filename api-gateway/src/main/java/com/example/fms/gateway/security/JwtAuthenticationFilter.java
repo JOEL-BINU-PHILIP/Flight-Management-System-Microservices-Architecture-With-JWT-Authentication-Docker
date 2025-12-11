@@ -3,8 +3,8 @@ package com.example.fms.gateway.security;
 import io.jsonwebtoken.Claims;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -14,40 +14,61 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
 
     private final JwtUtil jwtUtil;
 
-    // Manual constructor - removed @RequiredArgsConstructor
     public JwtAuthenticationFilter(JwtUtil jwtUtil) {
-        super(Config.class);  // Tell Spring Gateway which Config class to use
+        super(Config.class);
         this.jwtUtil = jwtUtil;
     }
 
-    public static class Config {
-        // Empty config class - no properties needed
-    }
+    public static class Config {}
 
     @Override
     public GatewayFilter apply(Config config) {
 
         return (exchange, chain) -> {
+
+            String path = exchange.getRequest().getPath().value();
+
+            // ================================
+            // 1️⃣ ALLOW PUBLIC ENDPOINTS
+            // ================================
+            if (path.startsWith("/auth/login") ||
+                    path.startsWith("/auth/register") ||
+                    path.startsWith("/auth/validate") ||
+                    path.startsWith("/actuator")) {
+
+                return chain.filter(exchange);
+            }
+
+            // ================================
+            // 2️⃣ CHECK AUTH HEADER
+            // ================================
             String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return this.onError(exchange, "Missing Authorization Header", HttpStatus.UNAUTHORIZED);
+                return onError(exchange, "Missing Authorization Header", HttpStatus.UNAUTHORIZED);
             }
 
             String token = authHeader.substring(7);
 
             if (!jwtUtil.isTokenValid(token)) {
-                return this.onError(exchange, "Invalid Token", HttpStatus.UNAUTHORIZED);
+                return onError(exchange, "Invalid Token", HttpStatus.UNAUTHORIZED);
             }
 
+            // ================================
+            // 3️⃣ EXTRACT CLAIMS
+            // ================================
             Claims claims = jwtUtil.extractAllClaims(token);
+            String email = claims.getSubject();
+            String role = claims.get("role", String.class);
 
-            // Forward user identity to microservices
+            // ================================
+            // 4️⃣ FORWARD USER DETAILS
+            // ================================
             return chain.filter(
                     exchange.mutate().request(
                             exchange.getRequest().mutate()
-                                    .header("X-USER-EMAIL", claims.getSubject())
-                                    .header("X-USER-ROLE", claims.get("role", String.class))
+                                    .header("X-USER-EMAIL", email)
+                                    .header("X-USER-ROLE", role)
                                     .build()
                     ).build()
             );
