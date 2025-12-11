@@ -34,6 +34,7 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             if (path.startsWith("/auth/login") ||
                     path.startsWith("/auth/register") ||
                     path.startsWith("/auth/validate") ||
+                    path.startsWith("/auth/logout") ||
                     path.startsWith("/actuator")) {
 
                 return chain.filter(exchange);
@@ -45,13 +46,13 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return onError(exchange, "Missing Authorization Header", HttpStatus.UNAUTHORIZED);
+                return onError(exchange, "Missing or Invalid Authorization Header", HttpStatus.UNAUTHORIZED);
             }
 
             String token = authHeader.substring(7);
 
             if (!jwtUtil.isTokenValid(token)) {
-                return onError(exchange, "Invalid Token", HttpStatus.UNAUTHORIZED);
+                return onError(exchange, "Invalid or Expired Token", HttpStatus.UNAUTHORIZED);
             }
 
             // ================================

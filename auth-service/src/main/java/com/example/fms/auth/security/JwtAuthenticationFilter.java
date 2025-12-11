@@ -1,5 +1,5 @@
 package com.example.fms.auth.security;
-// Just Added for testing
+
 import java.io.IOException;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,15 +19,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
+        // ✅ SKIP FILTER FOR PUBLIC ENDPOINTS
+        String path = request.getRequestURI();
+        if (path.startsWith("/auth/login") ||
+                path.startsWith("/auth/register") ||
+                path.startsWith("/auth/validate") ||
+                path.startsWith("/actuator") ||
+                path.startsWith("/error")) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         String header = request.getHeader("Authorization");
         String token = null;
-        if (header != null && header.startsWith("Bearer ")) token = header.substring(7);
+
+        if (header != null && header.startsWith("Bearer ")) {
+            token = header.substring(7);
+        }
 
         // fallback to cookie
         if (token == null) {
             if (request.getCookies() != null) {
                 for (Cookie c : request.getCookies()) {
-                    if ("jwt".equals(c.getName())) token = c.getValue();
+                    if ("jwt".equals(c.getName())) {
+                        token = c.getValue();
+                    }
                 }
             }
         }
@@ -44,4 +60,3 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         chain.doFilter(request, response);
     }
 }
-
