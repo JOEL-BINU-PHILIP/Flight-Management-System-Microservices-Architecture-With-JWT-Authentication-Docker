@@ -3,14 +3,15 @@ package com.example.fms.gateway.security;
 import io.jsonwebtoken.Claims;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpCookie;
+import org.springframework. http.HttpHeaders;
+import org.springframework. http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
-import reactor.core.publisher.Mono;
+import reactor.core. publisher.Mono;
 
 @Component
-public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAuthenticationFilter.Config> {
+public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAuthenticationFilter. Config> {
 
     private final JwtUtil jwtUtil;
 
@@ -29,7 +30,7 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             String path = exchange.getRequest().getPath().value();
 
             // ================================
-            // 1️⃣ ALLOW PUBLIC ENDPOINTS
+            // 1 ALLOW PUBLIC ENDPOINTS
             // ================================
             if (path.startsWith("/auth/login") ||
                     path.startsWith("/auth/register") ||
@@ -41,30 +42,28 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             }
 
             // ================================
-            // 2️⃣ CHECK AUTH HEADER
+            // 2️ EXTRACT TOKEN (Cookie First, Then Header)
             // ================================
-            String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+            String token = extractToken(exchange);
 
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return onError(exchange, "Missing or Invalid Authorization Header", HttpStatus.UNAUTHORIZED);
+            if (token == null) {
+                return onError(exchange, "Missing or Invalid Authorization", HttpStatus.UNAUTHORIZED);
             }
 
-            String token = authHeader.substring(7);
-
+            // ================================
+            // 3️ VALIDATE TOKEN
+            // ================================
             if (!jwtUtil.isTokenValid(token)) {
                 return onError(exchange, "Invalid or Expired Token", HttpStatus.UNAUTHORIZED);
             }
 
             // ================================
-            // 3️⃣ EXTRACT CLAIMS
+            // 4️⃣ EXTRACT CLAIMS & FORWARD
             // ================================
             Claims claims = jwtUtil.extractAllClaims(token);
             String email = claims.getSubject();
-            String role = claims.get("role", String.class);
+            String role = claims.get("role", String. class);
 
-            // ================================
-            // 4️⃣ FORWARD USER DETAILS
-            // ================================
             return chain.filter(
                     exchange.mutate().request(
                             exchange.getRequest().mutate()
@@ -74,6 +73,26 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
                     ).build()
             );
         };
+    }
+
+    /**
+     * Extract JWT token from Cookie (priority) or Authorization header (fallback)
+     */
+    private String extractToken(ServerWebExchange exchange) {
+
+        // Check HTTP-only cookie
+        HttpCookie jwtCookie = exchange.getRequest().getCookies().getFirst("jwt");
+        if (jwtCookie != null && ! jwtCookie.getValue().isEmpty()) {
+            return jwtCookie.getValue();
+        }
+
+        //Priority 2: Check Authorization header
+        String authHeader = exchange. getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+
+        return null;
     }
 
     private Mono<Void> onError(ServerWebExchange exchange, String err, HttpStatus code) {
