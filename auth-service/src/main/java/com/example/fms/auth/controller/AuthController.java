@@ -1,18 +1,19 @@
-package com.example.fms.auth.controller;
+package com.example.fms. auth.controller;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
-import com.example.fms.auth.dto.*;
+import com.example.fms.auth. dto.*;
 import com.example.fms.auth.model.User;
 import com.example.fms.auth.security.JwtService;
 import com.example.fms.auth.service.AuthService;
-import com.example.fms.auth.repository.UserRepository;
-import com.example.fms.auth.security.UserDetailsImpl;
+import com.example. fms.auth.repository.UserRepository;
+import com.example.fms.auth. security.UserDetailsImpl;
 
 import jakarta.validation.Valid;
 import org.springframework.security.authentication.*;
-import org.springframework.security.core.Authentication;
+import org.springframework.security. core.Authentication;
 
 import java.util.Map;
 
@@ -26,19 +27,25 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
 
+    @Value("${cookie.secure:false}")
+    private boolean cookieSecure;
+
+    @Value("${cookie.same-site: Strict}")
+    private String cookieSameSite;
+
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody SignupRequest req) {
+    public ResponseEntity<? > register(@Valid @RequestBody SignupRequest req) {
         try {
             User u = authService.register(req);
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(Map.of(
+                    .body(Map. of(
                             "message", "User created successfully",
                             "email", u.getEmail(),
                             "role", u.getRole().name()
                     ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", e.getMessage()));
+                    . body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -50,17 +57,17 @@ public class AuthController {
             );
 
             UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
-            String token = jwtService.generateToken(userDetails.getEmail(), userDetails.getUser().getRole());
+            String token = jwtService.generateToken(userDetails. getEmail(), userDetails.getUser().getRole());
 
             AuthResponse res = new AuthResponse(token, "Bearer", userDetails.getEmail(), userDetails.getUser().getRole().name());
 
-            // Optionally send cookie:
+            // 🔒 SECURE HTTP-ONLY COOKIE
             ResponseCookie cookie = ResponseCookie.from("jwt", token)
                     .httpOnly(true)
-                    .secure(false) // set to true in prod with HTTPS
+                    . secure(cookieSecure)  // true in production
                     .path("/")
-                    .maxAge(24 * 60 * 60)
-                    .sameSite("Lax")
+                    .maxAge(24 * 60 * 60)  // 1 day
+                    .sameSite(cookieSameSite)  // "Strict" in production
                     .build();
 
             return ResponseEntity.ok()
@@ -74,12 +81,14 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
+
+        // 🗑️ CLEAR COOKIE
         ResponseCookie cookie = ResponseCookie.from("jwt", "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(cookieSecure)
                 .path("/")
                 .maxAge(0)
-                .sameSite("Lax")
+                .sameSite(cookieSameSite)
                 .build();
 
         return ResponseEntity.ok()
