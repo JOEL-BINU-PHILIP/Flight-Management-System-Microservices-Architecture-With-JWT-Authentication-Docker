@@ -20,6 +20,7 @@ public class ApiGatewayApplication {
         corsConfig.setAllowedOrigins(Arrays.asList("http://localhost:4200")); // Angular frontend
         corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         corsConfig.setAllowedHeaders(Arrays.asList("*"));
+        corsConfig. setExposedHeaders(Arrays.asList("Set-Cookie"));
         corsConfig.setAllowCredentials(true);
         corsConfig.setMaxAge(3600L);
 
