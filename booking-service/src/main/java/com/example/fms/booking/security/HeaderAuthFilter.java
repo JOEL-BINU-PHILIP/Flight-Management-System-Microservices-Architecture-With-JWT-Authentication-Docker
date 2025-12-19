@@ -4,7 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework. security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -28,6 +28,9 @@ public class HeaderAuthFilter extends OncePerRequestFilter {
         String email = request.getHeader(USER_EMAIL_HEADER);
         String role = request.getHeader(USER_ROLE_HEADER);
 
+        System.out.println("📧 Booking Service - Email Header: " + email);
+        System.out.println("🔐 Booking Service - Role Header:  " + role);
+
         if (email != null && role != null) {
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(
@@ -37,6 +40,9 @@ public class HeaderAuthFilter extends OncePerRequestFilter {
                     );
 
             SecurityContextHolder.getContext().setAuthentication(auth);
+            System.out.println("Authentication SET for:  " + email);
+        } else {
+            System.err.println("Missing headers - authentication NOT set");
         }
 
         filterChain.doFilter(request, response);
