@@ -1,6 +1,7 @@
 package com.example.fms.booking.client;
 
-import com.example.fms.booking.dto.FlightInfoDTO;
+import com.example.fms.booking.config.FeignClientConfig;
+import com.example.fms.booking. dto.FlightInfoDTO;
 import com.example.fms.booking.dto.ReserveSeatRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
@@ -8,7 +9,8 @@ import org.springframework.web.bind.annotation.*;
 @FeignClient(
         name = "flight-service",
         path = "/api/flight",
-        fallback = FlightClientFallback.class
+        fallback = FlightClientFallback.class,
+        configuration = FeignClientConfig.class  // Add this line
 )
 public interface FlightClient {
 

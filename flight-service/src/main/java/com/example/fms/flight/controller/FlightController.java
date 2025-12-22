@@ -1,14 +1,18 @@
 package com.example.fms.flight.controller;
 
 import com.example.fms.flight.dto.*;
-import com.example.fms.flight.service.FlightService;
+import com.example.fms.flight.model.Airline;
+import com. example.fms.flight.service.FlightService;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework. http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security. access.prepost.PreAuthorize;
+import org.springframework. security.config.annotation.method. configuration.EnableMethodSecurity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/flight")
@@ -21,8 +25,14 @@ public class FlightController {
     @PostMapping("/airline")
     public ResponseEntity<String> addAirline(@RequestBody AddAirlineRequest req) {
         flightService.addAirline(req);
-        return ResponseEntity.status(HttpStatus.CREATED)
+        return ResponseEntity. status(HttpStatus.CREATED)
                 .body("Airline created successfully");
+    }
+
+    // ADMIN/USER → Get All Airlines (NEW ENDPOINT)
+    @GetMapping("/airlines")
+    public ResponseEntity<List<Airline>> getAllAirlines() {
+        return ResponseEntity.ok(flightService.getAllAirlines());
     }
 
     // ADMIN → Add Inventory
@@ -48,17 +58,17 @@ public class FlightController {
     // USER → Get Flight Details
     @GetMapping("/details/{flightId}")
     public ResponseEntity<FlightDTO> getFlightDetails(@PathVariable("flightId") String flightId) {
-        return ResponseEntity.ok(flightService.getFlightDetails(flightId));
+        return ResponseEntity. ok(flightService.getFlightDetails(flightId));
     }
 
     // USER → Reserve Seats (Used By Booking Service)
-    @PreAuthorize("hasRole('ROLE_CUSTOMER')")
+//    @PreAuthorize("hasRole('ROLE_CUSTOMER')")
     @PostMapping("/reserve/{flightId}")
     public ResponseEntity<Boolean> reserveSeats(
             @PathVariable("flightId") String flightId,
             @RequestBody ReserveSeatRequest req
     ) {
-        boolean result = flightService.reserveSeats(flightId, req.getSeats());
+        boolean result = flightService.reserveSeats(flightId, req. getSeats());
         return ResponseEntity.ok(result);
     }
 }

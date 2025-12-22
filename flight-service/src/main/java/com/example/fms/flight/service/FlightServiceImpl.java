@@ -25,7 +25,10 @@ public class FlightServiceImpl implements FlightService {
     private static final DateTimeFormatter DATE_TIME_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
-
+    @Override
+    public List<Airline> getAllAirlines() {
+        return airlineRepository.findAll();
+    }
     // ADD AIRLINE (with duplicate validation)
     @Override
     public void addAirline(AddAirlineRequest req) {
