@@ -1,19 +1,19 @@
-package com.example.fms. auth.controller;
+package com.example.fms.auth. controller;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework. beans.factory.annotation.Value;
 import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
-import lombok.RequiredArgsConstructor;
-import com.example.fms.auth. dto.*;
-import com.example.fms.auth.model.User;
-import com.example.fms.auth.security.JwtService;
-import com.example.fms.auth.service.AuthService;
-import com.example. fms.auth.repository.UserRepository;
-import com.example.fms.auth. security.UserDetailsImpl;
+import org.springframework.web. bind.annotation.*;
+import lombok. RequiredArgsConstructor;
+import com.example.fms. auth.dto.*;
+import com. example.fms.auth.model.User;
+import com.example.fms.auth.security. JwtService;
+import com. example.fms.auth.service.AuthService;
+import com. example.fms.auth.repository.UserRepository;
+import com. example.fms.auth.security.UserDetailsImpl;
 
 import jakarta.validation.Valid;
 import org.springframework.security.authentication.*;
-import org.springframework.security. core.Authentication;
+import org.springframework.security.core.Authentication;
 
 import java.util.Map;
 
@@ -41,11 +41,11 @@ public class AuthController {
                     .body(Map. of(
                             "message", "User created successfully",
                             "email", u.getEmail(),
-                            "role", u.getRole().name()
+                            "role", u. getRole().name()
                     ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    . body(Map.of("error", e.getMessage()));
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -61,7 +61,7 @@ public class AuthController {
 
             AuthResponse res = new AuthResponse(token, "Bearer", userDetails.getEmail(), userDetails.getUser().getRole().name());
 
-            // 🔒 SECURE HTTP-ONLY COOKIE
+            // SECURE HTTP-ONLY COOKIE
             ResponseCookie cookie = ResponseCookie.from("jwt", token)
                     .httpOnly(true)
                     . secure(cookieSecure)  // true in production
@@ -82,7 +82,6 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
 
-        // 🗑️ CLEAR COOKIE
         ResponseCookie cookie = ResponseCookie.from("jwt", "")
                 .httpOnly(true)
                 .secure(cookieSecure)
@@ -94,5 +93,21 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(Map.of("message", "Logged out successfully"));
+    }
+
+    // NEW ENDPOINT - Change Password
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest req) {
+        try {
+            authService.changePassword(req);
+            return ResponseEntity.ok()
+                    .body(Map. of("message", "Password changed successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map. of("error", "Failed to change password"));
+        }
     }
 }
