@@ -5,7 +5,7 @@ services:
   # ===========================
   config-server:
     build:
-      context: ../fms-config-server
+      context: ./fms-config-server
     container_name: config-server
     ports:
       - "8888:8888"
